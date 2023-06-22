@@ -1,0 +1,17 @@
+{
+  "name": "diff-file-type-pls",
+  "version": "1.0.0",
+  "description": "a CLI tool to convert file types",
+  "main": "bin/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "nevada le master",
+  "license": "MIT",
+  "bin": {
+    "tran": "./bin/index.js"
+  },
+  "dependencies": {
+    "jimp": "^0.22.8"
+  }
+}

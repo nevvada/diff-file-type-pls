@@ -1,15 +1,10 @@
 #!/usr/bin/env node
+const FileType = require('file-type');
 const fs = require('fs');
-const path = require('path');
 const Jimp = require('jimp');
 const readline = require('readline');
-const FileType = require('file-type');
 
-const IMAGE_FILE_EXTENSIONS = ['bmp', 'gif', 'jpeg', 'jpg', 'png', 'tiff'];
-const FILE_TYPES = {
-  IMAGE: 'image',
-}
-
+const IMAGE_FILE_EXTENSIONS = ['bmp', 'gif', 'jpg', 'png', 'tiff'];
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -24,8 +19,8 @@ function askQuestion(question) {
   });
 }
 
-function removeExtension({ sourceFileExtension, sourcePath }) {
-  const pattern = new RegExp(`\\.${sourceFileExtension}$`, 'i');
+function removeExtension(sourcePath) {
+  const pattern = new RegExp('\\.(' + IMAGE_FILE_EXTENSIONS.join('|') + ')$', 'i');
 
   return sourcePath.replace(pattern, '');
 }
@@ -40,15 +35,15 @@ async function removeOldFile(filePath) {
 
 async function convertFileType({
   destinationFileExtension,
-  sourceFileExtension,
   sourcePath,
 }) {
   try {
     const data = await fs.promises.readFile(sourcePath);
     const image = await Jimp.read(data);
-    const sourcePathWithoutOldExtension = removeExtension({ sourceFileExtension, sourcePath});
+    const sourcePathWithoutOldExtension = removeExtension(sourcePath);
 
     const outputFilePath = `${sourcePathWithoutOldExtension}.${destinationFileExtension}`;
+
     await image.writeAsync(outputFilePath);
   } catch(error) {
     console.error(error);
@@ -57,7 +52,7 @@ async function convertFileType({
 
 async function getFileExtension(filePath) {
   if (!fs.existsSync(filePath)) {
-    console.log('File does not exist');
+    console.log('File does not exist ( ๑•́ㅿ•̀๑)');
 
     process.exit();
   }
@@ -69,10 +64,10 @@ async function getFileExtension(filePath) {
 }
 
 async function runProgram() {
-  const sourcePath = await askQuestion('What is the path to the file you want to convert?\n> ');
+  const sourcePath = await askQuestion('What is the path to the file you want to convert? (? ・・)σ\n> ');
 
   if (!sourcePath) {
-    console.log('Please try again with the path to your file.');
+    console.log('Please try again with the path to your file ( *ゝ∀ ･)v');
 
     return;
   }
@@ -80,25 +75,30 @@ async function runProgram() {
   const sourceFileExtension = await getFileExtension(sourcePath)
 
   if (!sourceFileExtension) {
-    console.log('Unsupported file extension. Please try again.');
+    console.log('Unsupported file extension ╮ (. ❛ ᴗ ❛.) ╭');
 
     return;
   }
 
-  const newFileExtensionOptions = IMAGE_FILE_EXTENSIONS.filter((extension) => extension !== sourceFileExtension);
+  const newFileExtensionOptions = IMAGE_FILE_EXTENSIONS
+    .filter((extension) => {
+      if (sourceFileExtension === 'jpeg') {
+        return extension !== 'jpg';
+      }
+
+      return extension !== sourceFileExtension
+    });
+
   const newFileExtensionOptionsString = `
     ${newFileExtensionOptions.slice(0, newFileExtensionOptions.length - 1).join(', ')}, and ${newFileExtensionOptions[newFileExtensionOptions.length - 1]}.
   `;
 
   const destinationFileExtension = await askQuestion(`It looks like this is an image. What file type do you want to convert to? Your options are: ${newFileExtensionOptionsString}\n> `);
 
-  await convertFileType({
-    destinationFileExtension,
-    sourceFileExtension,
-    sourcePath,
-  });
-
+  await convertFileType({ destinationFileExtension, sourcePath });
   await removeOldFile(sourcePath);
+
+  console.log('The file has successfully been converted d(･∀･○)');
 
   process.exit();
 }

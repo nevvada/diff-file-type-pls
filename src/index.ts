@@ -1,14 +1,13 @@
 #!/usr/bin/env node
-import { existsSync } from 'fs';
+import { promises } from 'fs';
 
 import figlet from 'figlet';
-import { fileTypeFromFile } from 'file-type';
 
-import { ALL_SUPPORTED_FILE_TYPES, AllFileExtensionOptions } from './constants.js';
 import askQuestion from './utils/askQuestion/askQuestion.js';
 import getFileExtensionOptions from './utils/getFileExtensionOptions/getFileExtensionOptions.js';
 import { convertFileType } from './utils/convertFileType/convertFileType.js';
 import deleteSourceFile from './utils/deleteSourceFile/deleteSourceFile.js';
+import determineFileType from './utils/determineFileType/determineFileType.js';
 
 async function runProgram() {
   console.log(figlet.textSync('Diff File Type Pls'));
@@ -19,40 +18,36 @@ async function runProgram() {
     sourcePath = await askQuestion('Please try again with the path to your file ( *ゝ∀ ･)v\n> ');
   }
 
-  let fileType;
+  let sourceFileBuffer;
 
-  while (!fileType) {
+  while (!sourceFileBuffer) {
     try {
-      const extractedFileType = await fileTypeFromFile(sourcePath);
-      fileType = extractedFileType;
+      const extractedFileBuffer = await promises.readFile(sourcePath);
+      sourceFileBuffer = extractedFileBuffer;
     } catch(error) {
       sourcePath = await askQuestion('Sorry, file was not found. Please try again with the path to your file ( *ゝ∀ ･)v\n> ');
     }
   }
 
-  const sourceFileExtension = fileType?.ext as AllFileExtensionOptions;
+  const sourceFileType = await determineFileType(sourceFileBuffer);
 
-  if (!ALL_SUPPORTED_FILE_TYPES.includes(sourceFileExtension)) {
+  if (!sourceFileType) {
     console.log('Unsupported file extension ╮ (. ❛ ᴗ ❛.) ╭');
-
-    return;
   }
 
-  const newFileExtensionOptions = getFileExtensionOptions(sourceFileExtension);
-  const newFileExtensionOptionsString = `
-    ${newFileExtensionOptions!.slice(0, newFileExtensionOptions!.length - 1).join(', ')} and ${newFileExtensionOptions![newFileExtensionOptions!.length - 1]}.
-  `;
+  const newFileExtensionOptions = getFileExtensionOptions(sourceFileType);
+  const destinationFileType = await askQuestion(`It looks like this is an image. What file type do you want to convert to? Your options are: ${newFileExtensionOptions}\n> `);
 
-  const destinationFileExtension = await askQuestion(`It looks like this is an image. What file type do you want to convert to? Your options are: ${newFileExtensionOptionsString}\n> `);
-
-  const outputFilePath = await convertFileType({
-    destinationFileExtension,
-    sourceFileExtension,
+  const destinationFilePath = await convertFileType({
+    destinationFileType,
+    sourceFileBuffer,
+    sourceFileType,
     sourcePath,
   });
 
-  deleteSourceFile({
-    outputFilePath,
+
+  await deleteSourceFile({
+    destinationFilePath,
     sourcePath,
   })
 

@@ -1,16 +1,20 @@
 import { existsSync, unlink } from 'fs';
 
-interface DeleteOldFileArgs {
-  outputFilePath: string | undefined;
+interface DeleteSourceFileArgs {
+  destinationFilePath: string | undefined;
   sourcePath: string;
 }
 
-function deleteSourceFile({
-  outputFilePath,
+async function deleteSourceFile({
+  destinationFilePath,
   sourcePath,
-}: DeleteOldFileArgs) {
-  if (outputFilePath && existsSync(outputFilePath)) {
-    unlink(sourcePath, (error) => {
+}: DeleteSourceFileArgs) {
+  console.log({
+    destinationFilePath,
+    sourcePath,
+  })
+  if (destinationFilePath && existsSync(destinationFilePath)) {
+    await unlink(sourcePath, (error) => {
       if (error) {
         console.error(`Error removing file: ${error}`);
       }

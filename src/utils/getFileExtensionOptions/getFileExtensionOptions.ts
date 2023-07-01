@@ -1,22 +1,19 @@
 import {
-  IMAGE_FILE_EXTENSIONS_OUTPUT_OPTIONS,
-  AUDIO_FILE_EXTENSIONS_OUTPUT_OPTIONS,
-  AllFileExtensionOptions,
+  IMAGE_FILE_TYPES,
 } from '../../constants.js';
 
-import {
-  isImageFileType,
-  isAudioFileType,
-} from '../determineFileType/determineFileType.js';
+function getFileExtensionOptions(fileType: string) {
+  let fileTypeOptions: string[] = [];
 
-function getFileExtensionOptions(sourceFileExtension: AllFileExtensionOptions) {
-  if (isImageFileType(sourceFileExtension)) {
-    return IMAGE_FILE_EXTENSIONS_OUTPUT_OPTIONS.filter((option) => option !== sourceFileExtension);
+  if (IMAGE_FILE_TYPES.includes(fileType)) {
+    fileTypeOptions = IMAGE_FILE_TYPES.filter((type) => (
+      type !== fileType && type !== 'HEIC'
+    ));
   }
 
-  if (isAudioFileType(sourceFileExtension)) {
-    return AUDIO_FILE_EXTENSIONS_OUTPUT_OPTIONS.filter((option) => option !== sourceFileExtension);
-  }
+  return fileTypeOptions.length > 1
+    ? `${fileTypeOptions.slice(0, fileTypeOptions.length - 1).join(', ')} and ${fileTypeOptions[fileTypeOptions.length - 1]}`
+    : fileTypeOptions.toString();
 }
 
 export default getFileExtensionOptions;

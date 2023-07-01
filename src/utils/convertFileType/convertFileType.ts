@@ -1,38 +1,35 @@
 import path from 'path';
 
-import { promises } from 'fs';
+import { IMAGE_FILE_TYPES, FILE_EXTENSIONS } from '../../constants.js';
+import convertImageFile from '../convertImageFile/convertImageFile.js';
 
-import { fileTypeFromFile } from 'file-type';
-import Jimp from 'jimp';
-
-import {
-  isAudioFileType,
-  isImageFileType,
-} from '../determineFileType/determineFileType.js';
-import { AllFileExtensionOptions } from '../../constants.js';
-
-const { read } = Jimp;
+// const { read } = Jimp;
 
 interface ConvertFileTypeArgs {
-  destinationFileExtension: string,
-  sourceFileExtension: AllFileExtensionOptions,
-  sourcePath: string,
+  destinationFileType: string;
+  sourcePath: string;
+  sourceFileType: string;
+  sourceFileBuffer: Buffer;
 }
 
 export async function convertFileType({
-  destinationFileExtension,
-  sourceFileExtension,
+  destinationFileType,
+  sourceFileBuffer,
   sourcePath,
+  sourceFileType,
 }: ConvertFileTypeArgs) {
   const sourcePathWithoutOldExtension = path.basename(sourcePath, path.extname(sourcePath));
-  const outputFilePath = `${sourcePathWithoutOldExtension}.${destinationFileExtension}`;
+  const destinationFilePath = `${sourcePathWithoutOldExtension}.${FILE_EXTENSIONS[destinationFileType]}`;
 
   try {
-    if (isImageFileType(sourceFileExtension)) {
-      const data = await promises.readFile(sourcePath);
-      const image = await read(data);
-
-      await image.writeAsync(outputFilePath);
+    if (IMAGE_FILE_TYPES.includes(sourceFileType)) {
+      await convertImageFile({
+        destinationFilePath,
+        destinationFileType,
+        sourcePath,
+        sourceFileBuffer,
+        sourceFileType,
+      });
     }
 
     // if (isAudioFileType(sourceFileExtension)) {
@@ -46,8 +43,7 @@ export async function convertFileType({
     //     stdout('success!');
     //   });
     // }
-
-    return outputFilePath;
+    return destinationFilePath;
   } catch(error) {
     console.error(error);
   }
